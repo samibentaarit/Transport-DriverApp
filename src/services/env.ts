@@ -1,0 +1,31 @@
+import { AppLocale } from "@/types/models";
+
+function booleanEnv(value: string | undefined, fallback: boolean) {
+  if (value == null) {
+    return fallback;
+  }
+
+  return ["1", "true", "yes", "on"].includes(value.toLowerCase());
+}
+
+function numberEnv(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+export const env = {
+  apiUrl: process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/v1",
+  broadcastHost: process.env.EXPO_PUBLIC_BROADCAST_HOST ?? "127.0.0.1",
+  broadcastPort: numberEnv(process.env.EXPO_PUBLIC_BROADCAST_PORT, 6001),
+  broadcastScheme: process.env.EXPO_PUBLIC_BROADCAST_SCHEME ?? "http",
+  broadcastKey: process.env.EXPO_PUBLIC_BROADCAST_KEY ?? "school-transport-key",
+  useMocks: booleanEnv(process.env.EXPO_PUBLIC_USE_MOCKS, false),
+  enableDeviceEnrollment: booleanEnv(process.env.EXPO_PUBLIC_ENABLE_DEVICE_ENROLLMENT, false),
+  deviceEnrollmentPath: process.env.EXPO_PUBLIC_DEVICE_ENROLLMENT_PATH ?? "",
+  messagesPath: process.env.EXPO_PUBLIC_MESSAGES_PATH ?? "",
+  pushTokenPath: process.env.EXPO_PUBLIC_PUSH_TOKEN_PATH ?? "",
+  backgroundLocation: booleanEnv(process.env.EXPO_PUBLIC_BACKGROUND_LOCATION, false),
+  defaultLocale: (process.env.EXPO_PUBLIC_DEFAULT_LOCALE as AppLocale | undefined) ?? "en",
+  syncIntervalMs: numberEnv(process.env.EXPO_PUBLIC_SYNC_INTERVAL_MS, 15000)
+} as const;
+

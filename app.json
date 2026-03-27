@@ -1,0 +1,73 @@
+{
+  "expo": {
+    "name": "School Transport Driver",
+    "slug": "school-transport-driver",
+    "scheme": "schooltransportdriver",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true,
+          "faceIDPermission": "Allow School Transport Driver to unlock your secured driver session."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow School Transport Driver to access your location during an active trip.",
+          "locationWhenInUsePermission": "Allow School Transport Driver to access your location during active trips.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "operations",
+          "enableBackgroundRemoteNotifications": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow School Transport Driver to scan QR codes for driver enrollment and student boarding."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow School Transport Driver to attach incident photos.",
+          "cameraPermission": "Allow School Transport Driver to capture incident photos.",
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.schooltransport.driver",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.schooltransport.driver",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
+      ]
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
