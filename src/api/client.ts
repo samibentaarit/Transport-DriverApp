@@ -7,6 +7,8 @@ type RequestOptions = {
   retryOnAuthError?: boolean;
 };
 
+const REQUEST_TIMEOUT_MS = 10000;
+
 function isJsonResponse(contentType: string | null) {
   return contentType?.includes("application/json");
 }
@@ -64,15 +66,33 @@ export class ApiClient {
       headers.set("Authorization", `Bearer ${session.accessToken}`);
     }
 
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      method: init.method,
-      headers,
-      body: init.body
-        ? isFormData
-          ? (init.body as FormData)
-          : JSON.stringify(init.body)
-        : undefined
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}${path}`, {
+        method: init.method,
+        headers,
+        body: init.body
+          ? isFormData
+            ? (init.body as FormData)
+            : JSON.stringify(init.body)
+          : undefined,
+        signal: controller.signal
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new AppError(
+          `Request timed out after ${REQUEST_TIMEOUT_MS / 1000}s. Check EXPO_PUBLIC_API_URL and LAN connectivity.`,
+          { status: 408 }
+        );
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if ((response.status === 401 || response.status === 419) && options.retryOnAuthError !== false && session) {
       const refreshed = await this.tryRefreshToken();

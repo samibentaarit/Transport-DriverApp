@@ -6,6 +6,7 @@ import * as Notifications from "expo-notifications";
 import { AppProviders } from "@/app/providers/AppProviders";
 import { BrandedSplash } from "@/components/BrandedSplash";
 import { useAppBootstrap } from "@/hooks/useAppBootstrap";
+import { canUseRemotePushNotifications } from "@/services/pushNotifications";
 import { useAuthStore } from "@/store/authStore";
 
 function useProtectedRoute(ready: boolean) {
@@ -33,7 +34,7 @@ function useNotificationObserver() {
   const router = useRouter();
 
   useEffect(() => {
-    if (Platform.OS === "web") {
+    if (!canUseRemotePushNotifications()) {
       return;
     }
 

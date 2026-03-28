@@ -1,4 +1,5 @@
 import { AppLocale } from "@/types/models";
+import Constants from "expo-constants";
 
 function booleanEnv(value: string | undefined, fallback: boolean) {
   if (value == null) {
@@ -13,9 +14,28 @@ function numberEnv(value: string | undefined, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function inferExpoHost() {
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (!hostUri) {
+    return null;
+  }
+
+  const [host] = hostUri.split(":");
+  return host || null;
+}
+
+function defaultApiUrl() {
+  const host = inferExpoHost();
+  return host ? `http://${host}:8000/api/v1` : "http://127.0.0.1:8000/api/v1";
+}
+
+function defaultBroadcastHost() {
+  return inferExpoHost() ?? "127.0.0.1";
+}
+
 export const env = {
-  apiUrl: process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/v1",
-  broadcastHost: process.env.EXPO_PUBLIC_BROADCAST_HOST ?? "127.0.0.1",
+  apiUrl: process.env.EXPO_PUBLIC_API_URL ?? defaultApiUrl(),
+  broadcastHost: process.env.EXPO_PUBLIC_BROADCAST_HOST ?? defaultBroadcastHost(),
   broadcastPort: numberEnv(process.env.EXPO_PUBLIC_BROADCAST_PORT, 6001),
   broadcastScheme: process.env.EXPO_PUBLIC_BROADCAST_SCHEME ?? "http",
   broadcastKey: process.env.EXPO_PUBLIC_BROADCAST_KEY ?? "school-transport-key",
