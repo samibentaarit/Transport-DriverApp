@@ -8,7 +8,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { darkTheme, lightTheme } from "@/constants/theme";
 import { useSettingsStore } from "@/store/settingsStore";
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 15_000,

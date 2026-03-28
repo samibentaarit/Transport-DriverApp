@@ -15,13 +15,26 @@ function numberEnv(value: string | undefined, fallback: number) {
 }
 
 function inferExpoHost() {
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (!hostUri) {
-    return null;
+  const hostCandidates = [
+    Constants.expoConfig?.hostUri,
+    (Constants as unknown as { expoGoConfig?: { debuggerHost?: string } }).expoGoConfig?.debuggerHost,
+    (Constants as unknown as { manifest?: { debuggerHost?: string } }).manifest?.debuggerHost,
+    (Constants as unknown as { manifest2?: { extra?: { expoClient?: { hostUri?: string } } } }).manifest2?.extra
+      ?.expoClient?.hostUri
+  ];
+
+  for (const candidate of hostCandidates) {
+    if (!candidate) {
+      continue;
+    }
+
+    const [host] = candidate.split(":");
+    if (host) {
+      return host;
+    }
   }
 
-  const [host] = hostUri.split(":");
-  return host || null;
+  return null;
 }
 
 function defaultApiUrl() {
@@ -29,13 +42,41 @@ function defaultApiUrl() {
   return host ? `http://${host}:8000/api/v1` : "http://127.0.0.1:8000/api/v1";
 }
 
+function normalizeApiUrl(rawUrl: string) {
+  const host = inferExpoHost();
+  if (!host) {
+    return rawUrl;
+  }
+
+  try {
+    const url = new URL(rawUrl);
+    if (["localhost", "127.0.0.1", "0.0.0.0"].includes(url.hostname)) {
+      url.hostname = host;
+      return url.toString();
+    }
+  } catch {
+    return rawUrl;
+  }
+
+  return rawUrl;
+}
+
+function normalizeHost(rawHost: string) {
+  const host = inferExpoHost();
+  if (!host) {
+    return rawHost;
+  }
+
+  return ["localhost", "127.0.0.1", "0.0.0.0"].includes(rawHost) ? host : rawHost;
+}
+
 function defaultBroadcastHost() {
   return inferExpoHost() ?? "127.0.0.1";
 }
 
 export const env = {
-  apiUrl: process.env.EXPO_PUBLIC_API_URL ?? defaultApiUrl(),
-  broadcastHost: process.env.EXPO_PUBLIC_BROADCAST_HOST ?? defaultBroadcastHost(),
+  apiUrl: normalizeApiUrl(process.env.EXPO_PUBLIC_API_URL ?? defaultApiUrl()).replace(/\/$/, ""),
+  broadcastHost: normalizeHost(process.env.EXPO_PUBLIC_BROADCAST_HOST ?? defaultBroadcastHost()),
   broadcastPort: numberEnv(process.env.EXPO_PUBLIC_BROADCAST_PORT, 6001),
   broadcastScheme: process.env.EXPO_PUBLIC_BROADCAST_SCHEME ?? "http",
   broadcastKey: process.env.EXPO_PUBLIC_BROADCAST_KEY ?? "school-transport-key",

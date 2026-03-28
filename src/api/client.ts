@@ -84,7 +84,7 @@ export class ApiClient {
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         throw new AppError(
-          `Request timed out after ${REQUEST_TIMEOUT_MS / 1000}s. Check EXPO_PUBLIC_API_URL and LAN connectivity.`,
+          `Request timed out after ${REQUEST_TIMEOUT_MS / 1000}s while calling ${this.baseUrl}. Verify EXPO_PUBLIC_API_URL points to your computer LAN IP and start Laravel with: php artisan serve --host=0.0.0.0 --port=8000.`,
           { status: 408 }
         );
       }
