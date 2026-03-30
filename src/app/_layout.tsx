@@ -1,9 +1,7 @@
 import { useEffect } from "react";
-import { Platform } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
-import * as Notifications from "expo-notifications";
 
-import { AppProviders } from "@/app/providers/AppProviders";
+import { AppProviders } from "@/providers/AppProviders";
 import { BrandedSplash } from "@/components/BrandedSplash";
 import { useAppBootstrap } from "@/hooks/useAppBootstrap";
 import { canUseRemotePushNotifications } from "@/services/pushNotifications";
@@ -38,20 +36,42 @@ function useNotificationObserver() {
       return;
     }
 
-    const response = Notifications.getLastNotificationResponse();
-    const url = response?.notification.request.content.data?.url;
-    if (typeof url === "string") {
-      router.push(url as never);
+    let mounted = true;
+    let subscription: { remove: () => void } | undefined;
+
+    try {
+      void (async () => {
+        const Notifications = await import("expo-notifications");
+        if (!mounted) {
+          return;
+        }
+
+        const response = Notifications.getLastNotificationResponse();
+        const url = response?.notification.request.content.data?.url;
+        if (typeof url === "string") {
+          router.push(url as never);
+        }
+
+        subscription = Notifications.addNotificationResponseReceivedListener((event) => {
+          const nextUrl = event.notification.request.content.data?.url;
+          if (typeof nextUrl === "string") {
+            router.push(nextUrl as never);
+          }
+        });
+      })().catch((error) => {
+        console.warn("Notification observer disabled", error);
+      });
+
+      return () => {
+        mounted = false;
+        subscription?.remove();
+      };
+    } catch (error) {
+      console.warn("Notification observer disabled", error);
+      return () => {
+        mounted = false;
+      };
     }
-
-    const subscription = Notifications.addNotificationResponseReceivedListener((event) => {
-      const nextUrl = event.notification.request.content.data?.url;
-      if (typeof nextUrl === "string") {
-        router.push(nextUrl as never);
-      }
-    });
-
-    return () => subscription.remove();
   }, [router]);
 }
 

@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 
-import { queryClient } from "@/app/providers/AppProviders";
+import { queryClient } from "@/providers/AppProviders";
 
 export default function AppLayout() {
   return (

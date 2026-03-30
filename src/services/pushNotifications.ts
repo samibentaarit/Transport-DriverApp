@@ -1,26 +1,52 @@
 import { Platform } from "react-native";
 import Constants from "expo-constants";
-import * as Notifications from "expo-notifications";
 
 import { backend } from "@/services/backend";
+import { env } from "@/services/env";
+
+type NotificationsModule = typeof import("expo-notifications");
+
+let notificationHandlerInitialized = false;
+
+async function getNotificationsModule(): Promise<NotificationsModule | null> {
+  try {
+    return await import("expo-notifications");
+  } catch {
+    return null;
+  }
+}
 
 const isExpoGo =
   Constants.appOwnership === "expo" ||
   Constants.executionEnvironment === "storeClient";
 
 export function canUseRemotePushNotifications() {
-  return Platform.OS !== "web" && !isExpoGo;
+  return env.enableRemotePushNotifications && Platform.OS !== "web" && !isExpoGo;
 }
 
-if (canUseRemotePushNotifications()) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true
-    })
-  });
+async function ensureNotificationHandler() {
+  if (!canUseRemotePushNotifications() || notificationHandlerInitialized) {
+    return;
+  }
+
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) {
+    return;
+  }
+
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true
+      })
+    });
+    notificationHandlerInitialized = true;
+  } catch (error) {
+    console.warn("Notification handler disabled", error);
+  }
 }
 
 export async function registerForPushNotifications() {
@@ -29,6 +55,13 @@ export async function registerForPushNotifications() {
   }
 
   try {
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) {
+      return null;
+    }
+
+    await ensureNotificationHandler();
+
     if (Platform.OS === "android") {
       await Notifications.setNotificationChannelAsync("operations", {
         name: "Operations",
